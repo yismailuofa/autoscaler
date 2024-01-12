@@ -32,5 +32,7 @@ services:
     
   autoscaler:
     image: yismailuofa/autoscaler
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"    
     ports:
       - "8001:8001"
