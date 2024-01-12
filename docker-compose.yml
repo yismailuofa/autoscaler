@@ -2,7 +2,7 @@ version: '3'
 
 services:
   web:
-    image: web:dev
+    image: yismailuofa/web
     ports:
       - "8000:8000"
     deploy:
@@ -31,6 +31,6 @@ services:
         constraints: [node.role == manager]
     
   autoscaler:
-    image: autoscaler:dev
+    image: yismailuofa/autoscaler
     ports:
       - "8001:8001"
