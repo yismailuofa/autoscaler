@@ -31,11 +31,15 @@ times = []
 @app.route('/time', methods=['POST'])
 def updateTimes():
     times.append(float(request.data))
+
+    print("Received time: {}".format(request.data))
+
     return Response(status=200) 
 
 def monitor(times):
     while True:
         average = sum(times) / max(len(times), 1)
+        print("Average time: {}".format(average))
         service = client.services.get('web-app')
         newScale = currScale = service.attrs['Spec']['Mode']['Replicated']['Replicas']
 
