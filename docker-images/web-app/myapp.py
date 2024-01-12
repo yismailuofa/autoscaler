@@ -29,6 +29,9 @@ def difficult_function():
 def hello():
     count = redis.incr('hits')
     computation_time = difficult_function()
+
+    # TODO: Send computation time to the autoscaler
+
     return 'Hello There! I have been seen {} times. I have solved the problem in {} seconds.\n'.format(count,
                                                                                                        computation_time)
 
