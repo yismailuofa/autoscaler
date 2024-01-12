@@ -31,9 +31,7 @@ def hello():
     count = redis.incr('hits')
     computation_time = difficult_function()
 
-    # TODO: Send computation time to the autoscaler
-    # by default, host-name is the ip send post request to it
-    requests.post('http://autoscaler:8001/', data=computation_time)
+    requests.post('http://autoscaler:8001/', data=str(computation_time))
      
     return 'Hello There! I have been seen {} times. I have solved the problem in {} seconds.\n'.format(count,
                                                                                                        computation_time)
