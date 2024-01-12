@@ -29,3 +29,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
+    
+  autoscaler:
+    build:
+      context: ./docker-images/autoscaler/

@@ -37,14 +37,14 @@ def monitor(times):
     while True:
         average = sum(times) / max(len(times), 1)
         service = client.services.get('web-app')
-        current_scale = service.attrs['Spec']['Mode']['Replicated']['Replicas']
+        newScale = currScale = service.attrs['Spec']['Mode']['Replicated']['Replicas']
 
         if average > CONFIG["scaleUpThresholdSeconds"]:
-            new_scale = int(current_scale * CONFIG["scaleUpRatio"])
-            service.scale(min(new_scale, CONFIG["maxInstances"]))
+            newScale = min(int(currScale * CONFIG["scaleUpRatio"]), CONFIG["maxInstances"])
         elif average < CONFIG["scaleDownThresholdSeconds"]:
-            new_scale = int(current_scale * CONFIG["scaleDownRatio"])
-            service.scale(max(new_scale, CONFIG["minInstances"]))
+            newScale = max(int(currScale * CONFIG["scaleDownRatio"]), CONFIG["minInstances"])
+
+        service.scale(newScale)
 
         times.clear()
         time.sleep(CONFIG["monitoringIntervalSeconds"])

@@ -18,7 +18,7 @@ def difficult_function():
     output = 1
     t0 = time.time()
     difficulty = random.randint(1000000, 2000000)
-    for i in range(difficulty):
+    for _ in range(difficulty):
         output = output * difficulty
         output = output / (difficulty - 1)
     t1 = time.time()
