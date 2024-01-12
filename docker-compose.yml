@@ -2,7 +2,7 @@ version: '3'
 
 services:
   web:
-    image: zhijiewang22/simpleweb:1
+    image: web:dev
     ports:
       - "8000:8000"
     deploy:
@@ -31,5 +31,6 @@ services:
         constraints: [node.role == manager]
     
   autoscaler:
-    build:
-      context: ./docker-images/autoscaler/
+    image: autoscaler:dev
+    ports:
+      - "8001:8001"
