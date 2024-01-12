@@ -40,7 +40,7 @@ def monitor(times):
     while True:
         average = sum(times) / max(len(times), 1)
         print("Average time: {}".format(average))
-        service = [s for s in client.services.list() if "autoscaler" in s.name][0]
+        service = [s for s in client.services.list() if "web" in s.name][0]
         newScale = currScale = service.attrs['Spec']['Mode']['Replicated']['Replicas']
 
         if average > CONFIG["scaleUpThresholdSeconds"]:
@@ -48,7 +48,9 @@ def monitor(times):
         elif average < CONFIG["scaleDownThresholdSeconds"]:
             newScale = max(int(currScale * CONFIG["scaleDownRatio"]), CONFIG["minInstances"])
 
-        service.scale(newScale)
+        if newScale != currScale:
+            print(f"Scaling from {currScale} to {newScale}")
+            service.scale(newScale)
 
         times.clear()
         time.sleep(CONFIG["monitoringIntervalSeconds"])
