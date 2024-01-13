@@ -16,7 +16,7 @@ from flask import Flask, Response, request
 
 CONFIG = {
     "maxInstances": 5, # Maximum number of instances to scale up to
-    "minInstances": 1, # Minimum number of instances to scale down to
+    "minInstances": 2, # Minimum number of instances to scale down to
     "scaleUpThresholdSeconds": 0.8, # Scale up if the average computation time is greater than this
     "scaleDownThresholdSeconds": 0.5, # Scale down if the average computation time is less than this
     "scaleUpRatio": 2, # Scale up by this ratio
@@ -57,4 +57,4 @@ def monitor(times):
 
 if __name__ == "__main__":
     threading.Thread(target=monitor, args=(times,)).start()
-    app.run(host="0.0.0.0", port=8001, debug=True)
+    app.run(host="0.0.0.0", port=8001, debug=False)
