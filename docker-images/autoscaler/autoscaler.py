@@ -17,10 +17,10 @@ from flask import Flask, Response, request
 CONFIG = {
     "maxInstances": 5,  # Maximum number of instances to scale up to
     "minInstances": 1,  # Minimum number of instances to scale down to
-    "scaleUpThresholdSeconds": 2.0,  # Scale up if the average computation time is greater than this
-    "scaleDownThresholdSeconds": 1.0,  # Scale down if the average computation time is less than this
+    "scaleUpThresholdSeconds": 4.0,  # Scale up if the average computation time is greater than this
+    "scaleDownThresholdSeconds": 2.5,  # Scale down if the average computation time is less than this
     "scaleAmount": 1,  # How much to scale up or down by
-    "monitoringIntervalSeconds": 5,  # How often to check the average computation time
+    "monitoringIntervalSeconds": 15,  # How often to check the average computation time
 }
 
 client = docker.from_env()
