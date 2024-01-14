@@ -2,11 +2,11 @@
 HTTP client simulator. It simulate a number of concurrent users and calculate the response time for each request.
 """
 
-import numpy as np
 import requests
 import time
 import threading
 import sys
+from requests.adapters import HTTPAdapter
 
 if len(sys.argv) < 4:
     print("To few arguments; you need to specify 3 arguments.")
@@ -36,10 +36,16 @@ class MyThread(threading.Thread):
 def workload(user):
     while True:
         t0 = time.time()
-        requests.get("http://" + swarm_master_ip + ":8000/")
+        sendRequest()
         t1 = time.time()
         time.sleep(think_time)
         print("Response Time for " + user + " = " + str(t1 - t0))
+
+
+def sendRequest():
+    with requests.Session() as s:
+        s.mount("http://", HTTPAdapter(max_retries=5))
+        s.get("http://" + swarm_master_ip + ":8000/")
 
 
 if __name__ == "__main__":
