@@ -43,7 +43,7 @@ def workload(user):
 
 def sendRequest():
     with requests.Session() as s:
-        s.mount("http://", HTTPAdapter(Retry(total=5, backoff_factor=1)))
+        s.mount("http://", HTTPAdapter(max_retries=Retry(total=5, backoff_factor=1)))
         s.get("http://" + swarm_master_ip + ":8000/")
 
 
