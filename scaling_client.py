@@ -6,7 +6,7 @@ import requests
 import time
 import threading
 import sys
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, Retry
 
 if len(sys.argv) < 4:
     print("To few arguments; you need to specify 3 arguments.")
@@ -43,7 +43,7 @@ def workload(user):
 
 def sendRequest():
     with requests.Session() as s:
-        s.mount("http://", HTTPAdapter(max_retries=5))
+        s.mount("http://", HTTPAdapter(Retry(total=5, backoff_factor=1)))
         s.get("http://" + swarm_master_ip + ":8000/")
 
 
