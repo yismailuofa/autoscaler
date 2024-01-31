@@ -9,6 +9,7 @@ average computation time to determine
 whether to scale up or down.
 """
 
+import json
 import threading
 import time
 import docker
@@ -26,7 +27,7 @@ CONFIG = {
 client = docker.from_env()
 app = Flask(__name__)
 times = []
-
+lastTimeIndex = 0
 
 @app.route("/time", methods=["POST"])
 def updateTimes():
@@ -37,7 +38,8 @@ def updateTimes():
 
 def monitor(times):
     while True:
-        average = sum(times) / max(len(times), 1)
+        average = sum(times[lastTimeIndex:]) / max(len(times[lastTimeIndex:]), 1)
+        lastTimeIndex = len(times)
         print("Average time: {}".format(average))
         service = [s for s in client.services.list() if "web" in s.name][0]
         newScale = currScale = service.attrs["Spec"]["Mode"]["Replicated"]["Replicas"]
@@ -55,8 +57,54 @@ def monitor(times):
             print(f"Scaling from {currScale} to {newScale}")
             service.scale(newScale)
 
-        times.clear()
+        # times.clear()
         time.sleep(CONFIG["monitoringIntervalSeconds"])
+
+# real-time graph of response times
+@app.route("/graph")
+def graph():
+    return Response(
+        """
+        <html>
+        <head>
+            <title>Response Times</title>
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        </head>
+        <body>
+            <div id="graph"></div>
+            <script>
+                var times = [];
+                var timeIndex = 0;
+                var graph = document.getElementById("graph");
+
+                function updateGraph() {
+                    fetch("/times")
+                        .then(response => response.json())
+                        .then(newTimes => {
+                            if (newTimes.timeIndex > timeIndex) {
+                                timeIndex = newTimes.timeIndex;
+                                times = times.concat(newTimes.times);
+                            }
+                            Plotly.newPlot(graph, [{y: times, type: "line"}]);
+                        });
+                }
+
+                setInterval(updateGraph, 1000);
+            </script>
+        </body>
+        </html>
+        """,
+        mimetype="text/html",
+    )
+
+@app.route("/times")
+def getTimes():
+    return Response(json.dumps(
+        {
+            "timeIndex": lastTimeIndex,
+            "times": times,
+        }), mimetype="application/json")
+
 
 
 if __name__ == "__main__":
