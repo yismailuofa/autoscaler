@@ -97,6 +97,49 @@ def graph():
         mimetype="text/html",
     )
 
+# plot the workload (requests per second) by seeing the amount of times in the last 15 seconds
+@app.route("/workload")
+def workload():
+    return Response(
+        """
+        <html>
+        <head>
+            <title>Workload</title>
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        </head>
+        <body>
+            <div id="graph"></div>
+            <script>
+                var times = [];
+                var workload = [];
+                var timeIndex = 0;
+                var graph = document.getElementById("graph");
+                var monitoringIntervalSeconds = """+CONFIG["monitoringIntervalSeconds"]+""";
+                function updateGraph() {
+                    fetch("/times")
+                        .then(response => response.json())
+                        .then(newTimes => {
+                            if (newTimes.timeIndex > timeIndex) {
+                                timeIndex = newTimes.timeIndex;
+                                times = newTimes.times;
+                                // calculate the workload
+                                workload.concat(times.length / monitoringIntervalSeconds);
+                            } else{
+                                // if no new times, then the workload is 0
+                                workload.concat(0);
+                            }
+                            Plotly.newPlot(graph, [{y: workload, type: "line"}]);
+                        });
+                }
+
+                setInterval(updateGraph, 1000);
+            </script>
+        </body>
+        </html>
+        """,
+        mimetype="text/html",
+    )
+
 @app.route("/times")
 def getTimes():
     return Response(json.dumps(
