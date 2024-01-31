@@ -93,20 +93,20 @@ def graph():
 
                             const timesLayout = {
                                 title: "Response Times",
-                                xaxis: {title: "Seconds since server start"}
-                                yaxis: {title: "Response Time (s)"},
+                                xaxis: {title: "Seconds since server start"},
+                                yaxis: {title: "Response Time (s)"}
 
                             };
                             const workloadLayout = {
                                 title: "Workload",
-                                xaxis: {title: "Seconds since server start"}
-                                yaxis: {title: "Workload (req/s)"},
+                                xaxis: {title: "Seconds since server start"},
+                                yaxis: {title: "Workload (req/s)"}
                             };
 
                             const replicasLayout = {
                                 title: "Web-app Replicas",
-                                xaxis: {title: "Seconds since server start"}
-                                yaxis: {title: "Replicas"},
+                                xaxis: {title: "Seconds since server start"},
+                                yaxis: {title: "Replicas"}
                             };
 
                             Plotly.react("times-graph", [{x: times.map(t => t[0]), y: times.map(t => t[1]), type: "line"}], timesLayout);
