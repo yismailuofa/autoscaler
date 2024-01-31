@@ -58,8 +58,15 @@ def monitor(times):
             print(f"Scaling from {currScale} to {newScale}")
             service.scale(newScale)
 
-        plots["times"].append([(time.time() - currTime), average])
+        newTime = time.time() - currTime
+        plots["times"].append([newTime, average])
+        plots["workloads"].append(
+            [newTime, len(times) / CONFIG["monitoringIntervalSeconds"]]
+        )
+        plots["replicas"].append([newTime, newScale])
+
         times.clear()
+
         time.sleep(CONFIG["monitoringIntervalSeconds"])
 
 
@@ -74,60 +81,37 @@ def graph():
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         </head>
         <body>
-            <div id="graph"></div>
+            <div id="times-graph"></div>
+            <div id="workload-graph"></div>
+            <div id="replicas-graph"></div>
             <script>
                 function updateGraph() {
                     fetch("/plots")
                         .then(response => response.json())
                         .then(plots => {
-                            const {times} = plots;
-                            Plotly.newPlot(graph, [{x: times.map(t => t[0]), y: times.map(t => t[1]), type: "line"}]);
-                        });
-                }
+                            const {times, workloads, replicas} = plots;
 
-                setInterval(updateGraph, 1000);
-            </script>
-        </body>
-        </html>
-        """,
-        mimetype="text/html",
-    )
+                            const timesLayout = {
+                                title: "Response Times",
+                                xaxis: {title: "Seconds since server start"}
+                                yaxis: {title: "Response Time (s)"},
 
+                            };
+                            const workloadLayout = {
+                                title: "Workload",
+                                xaxis: {title: "Seconds since server start"}
+                                yaxis: {title: "Workload (req/s)"},
+                            };
 
-# plot the workload (requests per second) by seeing the amount of times in the last 15 seconds
-@app.route("/workload")
-def workload():
-    return Response(
-        """
-        <html>
-        <head>
-            <title>Workload</title>
-            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        </head>
-        <body>
-            <div id="graph"></div>
-            <script>
-                var times = [];
-                var workload = [];
-                var timeIndex = 0;
-                var graph = document.getElementById("graph");
-                var monitoringIntervalSeconds = """
-        + CONFIG["monitoringIntervalSeconds"]
-        + """;
-                function updateGraph() {
-                    fetch("/times")
-                        .then(response => response.json())
-                        .then(newTimes => {
-                            if (newTimes.timeIndex > timeIndex) {
-                                timeIndex = newTimes.timeIndex;
-                                times = newTimes.times;
-                                // calculate the workload
-                                workload.concat(times.length / monitoringIntervalSeconds);
-                            } else{
-                                // if no new times, then the workload is 0
-                                workload.concat(0);
-                            }
-                            Plotly.newPlot(graph, [{y: workload, type: "line"}]);
+                            const replicasLayout = {
+                                title: "Web-app Replicas",
+                                xaxis: {title: "Seconds since server start"}
+                                yaxis: {title: "Replicas"},
+                            };
+
+                            Plotly.react("times-graph", [{x: times.map(t => t[0]), y: times.map(t => t[1]), type: "line"}], timesLayout);
+                            Plotly.react("workload-graph", [{x: workloads.map(t => t[0]), y: workloads.map(t => t[1]), type: "line"}], workloadLayout);
+                            Plotly.react("replicas-graph", [{x: replicas.map(t => t[0]), y: replicas.map(t => t[1]), type: "line"}], replicasLayout);   
                         });
                 }
 
