@@ -21,13 +21,15 @@ CONFIG = {
     "scaleUpThresholdSeconds": 4.0,  # Scale up if the average computation time is greater than this
     "scaleDownThresholdSeconds": 2.5,  # Scale down if the average computation time is less than this
     "scaleAmount": 1,  # How much to scale up or down by
-    "monitoringIntervalSeconds": 15,  # How often to check the average computation time
+    "monitoringIntervalSeconds": 5,  # How often to check the average computation time
 }
 
 client = docker.from_env()
 app = Flask(__name__)
 times = []
-lastTimeIndex = 0
+plots = {"times": [], "workloads": [], "replicas": []}
+currTime = time.time()
+
 
 @app.route("/time", methods=["POST"])
 def updateTimes():
@@ -38,8 +40,7 @@ def updateTimes():
 
 def monitor(times):
     while True:
-        average = sum(times[lastTimeIndex:]) / max(len(times[lastTimeIndex:]), 1)
-        lastTimeIndex = len(times)
+        average = sum(times) / max(len(times), 1)
         print("Average time: {}".format(average))
         service = [s for s in client.services.list() if "web" in s.name][0]
         newScale = currScale = service.attrs["Spec"]["Mode"]["Replicated"]["Replicas"]
@@ -57,8 +58,10 @@ def monitor(times):
             print(f"Scaling from {currScale} to {newScale}")
             service.scale(newScale)
 
-        # times.clear()
+        plots["times"].append([(time.time() - currTime), average])
+        times.clear()
         time.sleep(CONFIG["monitoringIntervalSeconds"])
+
 
 # real-time graph of response times
 @app.route("/graph")
@@ -73,19 +76,12 @@ def graph():
         <body>
             <div id="graph"></div>
             <script>
-                var times = [];
-                var timeIndex = 0;
-                var graph = document.getElementById("graph");
-
                 function updateGraph() {
-                    fetch("/times")
+                    fetch("/plots")
                         .then(response => response.json())
-                        .then(newTimes => {
-                            if (newTimes.timeIndex > timeIndex) {
-                                timeIndex = newTimes.timeIndex;
-                                times = times.concat(newTimes.times);
-                            }
-                            Plotly.newPlot(graph, [{y: times, type: "line"}]);
+                        .then(plots => {
+                            const {times} = plots;
+                            Plotly.newPlot(graph, [{x: times.map(t => t[0]), y: times.map(t => t[1]), type: "line"}]);
                         });
                 }
 
@@ -96,6 +92,7 @@ def graph():
         """,
         mimetype="text/html",
     )
+
 
 # plot the workload (requests per second) by seeing the amount of times in the last 15 seconds
 @app.route("/workload")
@@ -114,7 +111,9 @@ def workload():
                 var workload = [];
                 var timeIndex = 0;
                 var graph = document.getElementById("graph");
-                var monitoringIntervalSeconds = """+CONFIG["monitoringIntervalSeconds"]+""";
+                var monitoringIntervalSeconds = """
+        + CONFIG["monitoringIntervalSeconds"]
+        + """;
                 function updateGraph() {
                     fetch("/times")
                         .then(response => response.json())
@@ -140,14 +139,13 @@ def workload():
         mimetype="text/html",
     )
 
-@app.route("/times")
-def getTimes():
-    return Response(json.dumps(
-        {
-            "timeIndex": lastTimeIndex,
-            "times": times,
-        }), mimetype="application/json")
 
+@app.route("/plots")
+def getTimes():
+    return Response(
+        json.dumps(plots),
+        mimetype="application/json",
+    )
 
 
 if __name__ == "__main__":
